@@ -1,0 +1,27 @@
+N = 100
+L = 20.
+
+gamma = 1.
+T = 1.
+m = 1.e-2
+
+N1 = 0
+kappa1 = 0.
+kappa2 = 0.
+
+sigma = 1.
+sigmaCO = 1.01
+epsilon = 100
+alpha = 16
+
+seed = 133456739
+
+rVerlet = 1.5
+dt = 1e-4
+
+equilibrationTime = 50
+NsampleTime = 50
+sampleDTime = 1
+totalTime = 5000
+
+

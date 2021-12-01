@@ -30,9 +30,6 @@ class System {
   void setPosition(int i, double x, double y) {
       positions_[i].x = x; positions_[i].y = y; }
 
-  double getPositionX(int i) const { return positions_[i].x; };
-  double getPositionY(int i) const { return positions_[i].y; };
-
   int getNumberOfParticles() const { return N_; }
   int getSystemSize() const { return L_; }
   std::vector<Vec2> getPositions() const { return positions_; }
@@ -117,7 +114,7 @@ System<Potential>::System(int N,
       m_(m),
       kappa_(N, 0.0),
       seed_(seed),
-      ndist(0., std::sqrt(2*T*gamma)),
+      ndist(0., std::sqrt(2*T/gamma)),
       rng(seed),
       rndist(rng, ndist) 
 { 
@@ -136,9 +133,7 @@ void System<Potential>::integrate(double t)
       step(dt_); 
       t -= dt_;
     }
-    step(t);
-  } else {
-    while (t - dt_ > 0) {
+    step(t); } else { while (t - dt_ > 0) {
       stepFree(dt_); 
       t -= dt_;
     }
@@ -153,18 +148,21 @@ void System<Potential>::stepFree(double dt)
   Vec2 dp(0, 0);
   
   for (int i = 0; i < N_; ++i) {
-    dr = velocities_[i] * dt;
-
-
-    dp.x = ( kappa_[i] * velocities_[i].y
-            - velocities_[i].x * gamma_) * dt
-            + sqrt(dt) * rndist();
-    dp.y = (-kappa_[i] * velocities_[i].x
-            - velocities_[i].y * gamma_ ) * dt
-            + sqrt(dt) * rndist();
-  
+    dr.x = sqrt(dt) * rndist();
+    dr.y = sqrt(dt) * rndist();
     positions_[i]  += dr;
-    velocities_[i] += dp / m_;
+
+    //dr = velocities_[i] * dt;
+
+    //dp.x = ( kappa_[i] * velocities_[i].y
+    //        - velocities_[i].x * gamma_) * dt
+    //        + rndist();
+    //dp.y = (-kappa_[i] * velocities_[i].x
+    //        - velocities_[i].y * gamma_ ) * dt
+    //        + rndist();
+  
+    //positions_[i]  += dr;
+    //velocities_[i] += dp / m_;
 
   }
 
@@ -179,20 +177,24 @@ void System<Potential>::step(double dt)
   
   bool update = false;
   for (int i = 0; i < N_; ++i) {
-    dr = velocities_[i] * dt;
+    dr = forces_[i]/gamma_;
+    dr.x += sqrt(dt) * rndist();
+    dr.y += sqrt(dt) * rndist();
 
+    positions_[i] += dr;
+    //dr = velocities_[i] * dt;
 
-    dp.x = ( kappa_[i] * velocities_[i].y
-            - velocities_[i].x * gamma_
-            + forces_[i].x) * dt
-            + sqrt(dt) * rndist();
-    dp.y = (-kappa_[i] * velocities_[i].x
-            - velocities_[i].y * gamma_ 
-            + forces_[i].y) * dt
-            + sqrt(dt) * rndist();
+    //dp.x = ( kappa_[i] * velocities_[i].y
+    //        - velocities_[i].x * gamma_
+    //        + forces_[i].x) * dt
+    //        + rndist();
+    //dp.y = (-kappa_[i] * velocities_[i].x
+    //        - velocities_[i].y * gamma_ 
+    //        + forces_[i].y) * dt
+    //        + rndist();
   
-    positions_[i]  += dr;
-    velocities_[i] += dp / m_;
+    //positions_[i]  += dr;
+    //velocities_[i] += dp / m_;
 
     // CHECK: TO DO
     dr = positionsAtUpdate_[i] - positions_[i];

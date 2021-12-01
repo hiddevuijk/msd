@@ -66,4 +66,5 @@ Vec2 operator/(const Vec2& v, const double& a)
 { return Vec2(v.x / a, v.y /a); }
 
 
+
 #endif
