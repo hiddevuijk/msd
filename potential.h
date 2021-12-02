@@ -46,13 +46,13 @@ Vec2 WCApotential::force(const Vec2& r1, const Vec2& r2, double L) const
   Vec2 d = r1 - r2;
 
   // Periodic boundary conditions
-  d.x -= L * std::round( d.x / L );
-  d.y -= L * std::round( d.y / L );
+  d.x -= L * round( d.x / L );
+  d.y -= L * round( d.y / L );
 
   double l = sqrt(d.x * d.x + d.y * d.y);
 
   if ( l < sigmaCutOff_ ) {
-    f = epsilon_ * std::pow(sigma_/l, alpha_) * d;
+    f = epsilon_ * pow(sigma_/l, alpha_) * d;
   }
   
   return f;
