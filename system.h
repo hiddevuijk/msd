@@ -38,6 +38,7 @@ class System {
   std::vector<Vec2> getPositions() const { return positions_; }
 
   void setKappa(double kappa1, int N1, double kappa2);
+  void setTemperature(double T1, int N1, double T2);
   void savePositions(std::string outname) const;
 
   double kineticEnergy() const;
@@ -80,9 +81,9 @@ class System {
   std::vector<Vec2> positionsAtUpdate_;
 
   double gamma_;
-  double T_;
   double m_;
   std::vector<double> kappa_;
+  std::vector<double> temperature_;
 
 	// random number generator
 
@@ -113,11 +114,11 @@ System<Potential>::System(int N,
       verletList_(N, std::vector<int>(N, -1)),
       positionsAtUpdate_(N),
       gamma_(gamma),
-      T_(T),
       m_(m),
       kappa_(N, 0.0),
+      temperature_(N, T),
       seed_(seed),
-      ndist(0., std::sqrt(2*T*gamma)),
+      ndist(0., std::sqrt(2*gamma)),
       rng(seed),
       rndist(rng, ndist) 
 { 
@@ -158,10 +159,10 @@ void System<Potential>::stepFree(double dt)
 
     dp.x = ( kappa_[i] * velocities_[i].y
             - velocities_[i].x * gamma_) * dt
-            + sqrt(dt) * rndist();
+            + sqrt(dt * temperature_[i]) * rndist();
     dp.y = (-kappa_[i] * velocities_[i].x
             - velocities_[i].y * gamma_ ) * dt
-            + sqrt(dt) * rndist();
+            + sqrt(dt * temperature_[i]) * rndist();
   
     positions_[i]  += dr;
     velocities_[i] += dp / m_;
@@ -182,14 +183,12 @@ void System<Potential>::step(double dt)
     dr = velocities_[i] * dt;
 
 
-    dp.x = ( kappa_[i] * velocities_[i].y
-            - velocities_[i].x * gamma_
-            + forces_[i].x) * dt
-            + sqrt(dt) * rndist();
-    dp.y = (-kappa_[i] * velocities_[i].x
-            - velocities_[i].y * gamma_ 
-            + forces_[i].y) * dt
-            + sqrt(dt) * rndist();
+    dp.x = ( kappa_[i] * velocities_[i].y - velocities_[i].x) * gamma_ * dt
+            + forces_[i].x * dt
+            + sqrt(dt * temperature_[i]) * rndist();
+    dp.y = (-kappa_[i] * velocities_[i].x - velocities_[i].y) * gamma_  * dt
+            + forces_[i].y * dt
+            + sqrt(dt * temperature_[i]) * rndist();
   
     positions_[i]  += dr;
     velocities_[i] += dp / m_;
@@ -312,6 +311,18 @@ void System<Potential>::setKappa(double kappa1, int N1, double kappa2)
     }
   }
 
+}
+
+template <class Potential>
+void System<Potential>::setTemperature(double T1, int N1, double T2)
+{
+  for (int i = 0; i < N_; ++i) {
+    if (i < N1) {
+      temperature_[i] = T1;
+    } else {
+      temperature_[i] = T1;
+    }
+  }
 }
 
 template <class Potential>

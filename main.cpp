@@ -22,33 +22,36 @@ void sampleAll(const System<WCApotential>& sys, MDiffusion& md)
 int main() {
 
   ConfigFile config("input.txt");
-  int N = config.read<int>("N");
-  double L = config.read<double>("L");
-  double dt = config.read<double>("dt");
-  double gamma = config.read<double>("gamma");
-  double T = config.read<double>("T");
-  double m = config.read<double>("m");
-  int seed = config.read<int>("seed");
+  int N          = config.read<int>("N");
+  double L       = config.read<double>("L");
+  double dt      = config.read<double>("dt");
+  double gamma   = config.read<double>("gamma");
+  double T1      = config.read<double>("T1");
+  double T2      = config.read<double>("T2");
+  double m       = config.read<double>("m");
+  int seed       = config.read<int>("seed");
   double rVerlet = config.read<double>("rVerlet");
-  int N1 = config.read<int>("N1");
-  double kappa1 = config.read<double>("kappa1");
-  double kappa2 = config.read<double>("kappa2");
+  int N1         = config.read<int>("N1");
+  double kappa1  = config.read<double>("kappa1");
+  double kappa2  = config.read<double>("kappa2");
 
-  double sigma = config.read<double>("sigma");
+  double sigma   = config.read<double>("sigma");
   double sigmaCO = config.read<double>("sigmaCO");
   double epsilon = config.read<double>("epsilon");
-  double alpha = config.read<double>("alpha");
+  double alpha   = config.read<double>("alpha");
  
   double equilibrationTime = config.read<double>("equilibrationTime");
-  double NsampleTime = config.read<double>("NsampleTime");
-  double sampleDTime = config.read<double>("sampleDTime");
-  double totalTime = config.read<double>("totalTime");
+  double NsampleTime       = config.read<double>("NsampleTime");
+  double sampleDTime       = config.read<double>("sampleDTime");
+  double totalTime         = config.read<double>("totalTime");
  
   WCApotential potential(sigma, sigmaCO, epsilon, alpha);
 
-  System<WCApotential> system(N, L, dt, rVerlet, potential, gamma, T,m, seed);
+  System<WCApotential> system(N, L, dt, rVerlet, potential, gamma,T1, m, seed);
 
   system.setKappa(kappa1, N1, kappa2);
+  system.setTemperature(T1, N1, T2);
+
   system.savePositions("r0.dat");
 
   double time = 0;
