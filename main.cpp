@@ -25,7 +25,8 @@ int main() {
   int N          = config.read<int>("N");
   double L       = config.read<double>("L");
   double dt      = config.read<double>("dt");
-  double gamma   = config.read<double>("gamma");
+  double gamma1  = config.read<double>("gamma1");
+  double gamma2  = config.read<double>("gamma2");
   double T1      = config.read<double>("T1");
   double T2      = config.read<double>("T2");
   double m       = config.read<double>("m");
@@ -47,10 +48,11 @@ int main() {
  
   WCApotential potential(sigma, sigmaCO, epsilon, alpha);
 
-  System<WCApotential> system(N, L, dt, rVerlet, potential, gamma,T1, m, seed);
+  System<WCApotential> system(N, L, dt, rVerlet, potential, gamma1,T1, m, seed);
 
   system.setKappa(kappa1, N1, kappa2);
   system.setTemperature(T1, N1, T2);
+  system.setGamma(gamma1, N1, gamma2);
 
   system.savePositions("r0.dat");
 

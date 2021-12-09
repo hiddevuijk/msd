@@ -39,6 +39,8 @@ class System {
 
   void setKappa(double kappa1, int N1, double kappa2);
   void setTemperature(double T1, int N1, double T2);
+  void setGamma(double gamma1, int N1, double gamma2);
+
   void savePositions(std::string outname) const;
 
   double kineticEnergy() const;
@@ -80,10 +82,10 @@ class System {
 
   std::vector<Vec2> positionsAtUpdate_;
 
-  double gamma_;
   double m_;
   std::vector<double> kappa_;
   std::vector<double> temperature_;
+  std::vector<double> gamma_;
 
 	// random number generator
 
@@ -113,10 +115,10 @@ System<Potential>::System(int N,
       potential_(potential),
       verletList_(N, std::vector<int>(N, -1)),
       positionsAtUpdate_(N),
-      gamma_(gamma),
       m_(m),
       kappa_(N, 0.0),
       temperature_(N, T),
+      gamma_(N, gamma),
       seed_(seed),
       ndist(0., std::sqrt(2*gamma)),
       rng(seed),
@@ -158,10 +160,10 @@ void System<Potential>::stepFree(double dt)
 
 
     dp.x = ( kappa_[i] * velocities_[i].y
-            - velocities_[i].x * gamma_) * dt
+            - velocities_[i].x ) * gamma_[i] * dt
             + sqrt(dt * temperature_[i]) * rndist();
     dp.y = (-kappa_[i] * velocities_[i].x
-            - velocities_[i].y * gamma_ ) * dt
+            - velocities_[i].y ) * gamma_[i] * dt
             + sqrt(dt * temperature_[i]) * rndist();
   
     positions_[i]  += dr;
@@ -183,10 +185,12 @@ void System<Potential>::step(double dt)
     dr = velocities_[i] * dt;
 
 
-    dp.x = ( kappa_[i] * velocities_[i].y - velocities_[i].x) * gamma_ * dt
+    dp.x = ( kappa_[i] * velocities_[i].y 
+              - velocities_[i].x) * gamma_[i] * dt
             + forces_[i].x * dt
             + sqrt(dt * temperature_[i]) * rndist();
-    dp.y = (-kappa_[i] * velocities_[i].x - velocities_[i].y) * gamma_  * dt
+    dp.y = (-kappa_[i] * velocities_[i].x 
+              - velocities_[i].y) * gamma_[i]  * dt
             + forces_[i].y * dt
             + sqrt(dt * temperature_[i]) * rndist();
   
@@ -320,7 +324,19 @@ void System<Potential>::setTemperature(double T1, int N1, double T2)
     if (i < N1) {
       temperature_[i] = T1;
     } else {
-      temperature_[i] = T1;
+      temperature_[i] = T2;
+    }
+  }
+}
+
+template <class Potential>
+void System<Potential>::setGamma(double gamma1, int N1, double gamma2)
+{
+  for (int i = 0; i < N_; ++i) {
+    if (i < N1) {
+      gamma_[i] = gamma1;
+    } else {
+      gamma_[i] = gamma2;
     }
   }
 }
