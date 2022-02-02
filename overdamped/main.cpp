@@ -44,7 +44,7 @@ int main() {
   double NsampleTime       = config.read<double>("NsampleTime");
   double sampleDTime       = config.read<double>("sampleDTime");
   double totalTime         = config.read<double>("totalTime");
- 
+
   WCApotential potential(sigma, sigmaCO, epsilon, alpha);
 
   System<WCApotential> system(N, L, dt, rVerlet, potential,T1,gamma1, seed);

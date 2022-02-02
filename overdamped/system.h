@@ -114,6 +114,7 @@ System<Potential>::System(int N,
       kappa_(N, 0.0),
       T_(N, T),
       gamma_(N, gamma),
+      D_(N, 0.0),
       seed_(seed),
       ndist(0., 1.),
       rng(seed),
@@ -235,7 +236,7 @@ void System<Potential>::updateVerletList()
         ++k;
       }
     }
-  } 
+  }
 }
 
 template <class Potential>
