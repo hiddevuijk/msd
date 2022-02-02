@@ -22,7 +22,7 @@ template <class Potential>
 class System {
  public:
   System(int N, double L, double dt, double rVerlet, Potential potential,
-         double gamma, double T, double m, int seed);
+         double T, double gamma, int seed);
    
   // evolve in time
   void integrate(double t);
@@ -38,12 +38,11 @@ class System {
   std::vector<Vec2> getPositions() const { return positions_; }
 
   void setKappa(double kappa1, int N1, double kappa2);
-  void setTemperature(double T1, int N1, double T2);
+  void setT(double T1, int N1, double T2);
   void setGamma(double gamma1, int N1, double gamma2);
 
   void savePositions(std::string outname) const;
 
-  double kineticEnergy() const;
 
   void backInBox();
 
@@ -51,8 +50,8 @@ class System {
   // set all positions of the particles to 
   void initOnGrid();
 
-  // set all velocities to 0
-  void resetVelocities();
+  // calculate D from T_ and gamma_
+  void resetD();
 
   // calculate forces
   void setForces();
@@ -73,7 +72,6 @@ class System {
   double rVerlet_; // verlet radius
 
   std::vector<Vec2> positions_;  
-  std::vector<Vec2> velocities_;
   std::vector<Vec2> forces_;
 
   Potential potential_;
@@ -82,10 +80,10 @@ class System {
 
   std::vector<Vec2> positionsAtUpdate_;
 
-  double m_;
   std::vector<double> kappa_;
-  std::vector<double> temperature_;
+  std::vector<double> T_;
   std::vector<double> gamma_;
+  std::vector<double> D_;
 
 	// random number generator
 
@@ -101,32 +99,29 @@ System<Potential>::System(int N,
                           double dt,
                           double rVerlet,
                           Potential potential,
-                          double gamma,
                           double T,
-                          double m,
+                          double gamma,
                           int seed)
     : N_(N),
       L_(L),
       dt_(dt),
       rVerlet_(rVerlet),
       positions_(N),
-      velocities_(N_),
       forces_(N),
       potential_(potential),
       verletList_(N, std::vector<int>(N, -1)),
       positionsAtUpdate_(N),
-      m_(m),
       kappa_(N, 0.0),
-      temperature_(N, T),
+      T_(N, T),
       gamma_(N, gamma),
       seed_(seed),
-      ndist(0., std::sqrt(2*gamma)),
+      ndist(0., 1.),
       rng(seed),
       rndist(rng, ndist) 
 { 
   initOnGrid();
   updateVerletList();
-  resetVelocities();
+  resetD();
 
 };
 
@@ -153,22 +148,11 @@ template <class Potential>
 void System<Potential>::stepFree(double dt)
 {
   Vec2 dr(0, 0);
-  Vec2 dp(0, 0);
   
   for (int i = 0; i < N_; ++i) {
-    dr = velocities_[i] * dt;
-
-
-    dp.x = ( kappa_[i] * velocities_[i].y
-            - velocities_[i].x ) * gamma_[i] * dt
-            + sqrt(dt * temperature_[i]) * rndist();
-    dp.y = (-kappa_[i] * velocities_[i].x
-            - velocities_[i].y ) * gamma_[i] * dt
-            + sqrt(dt * temperature_[i]) * rndist();
-  
+    dr.x = sqrt( 2*D_[i] * dt) * rndist();
+    dr.y = sqrt( 2*D_[i] * dt) * rndist();
     positions_[i]  += dr;
-    velocities_[i] += dp / m_;
-
   }
 
 }
@@ -178,24 +162,18 @@ void System<Potential>::step(double dt)
 {
   setForces();
   Vec2 dr(0, 0);
-  Vec2 dp(0, 0);
   
   bool update = false;
   for (int i = 0; i < N_; ++i) {
-    dr = velocities_[i] * dt;
 
+    dr.x = -1*forces_[i].x - kappa_[i] * forces_[i].y;
+    dr.y = -1*forces_[i].y + kappa_[i] * forces_[i].x;
+    dr *= dt/(gamma_[i]*(1+kappa_[i]*kappa_[i]));
 
-    dp.x = ( kappa_[i] * velocities_[i].y 
-              - velocities_[i].x) * gamma_[i] * dt
-            + forces_[i].x * dt
-            + sqrt(dt * temperature_[i]) * rndist();
-    dp.y = (-kappa_[i] * velocities_[i].x 
-              - velocities_[i].y) * gamma_[i]  * dt
-            + forces_[i].y * dt
-            + sqrt(dt * temperature_[i]) * rndist();
-  
+    dr.x += sqrt( 2*D_[i] * dt) * rndist();
+    dr.y += sqrt( 2*D_[i] * dt) * rndist();
+
     positions_[i]  += dr;
-    velocities_[i] += dp / m_;
 
     // CHECK: TO DO
     dr = positionsAtUpdate_[i] - positions_[i];
@@ -256,9 +234,7 @@ void System<Potential>::updateVerletList()
         verletList_[i][k] = j;
         ++k;
       }
-
     }
-
   } 
 }
 
@@ -296,15 +272,6 @@ void System<Potential>::initOnGrid()
 }
 
 template <class Potential>
-void System<Potential>::resetVelocities()
-{
-  for (int i = 0; i < N_; ++i) {
-    velocities_[i].x = 0;
-    velocities_[i].y = 0;
-  }
-}
-
-template <class Potential>
 void System<Potential>::setKappa(double kappa1, int N1, double kappa2)
 {
   for (int i = 0; i < N_; ++i) {
@@ -318,15 +285,16 @@ void System<Potential>::setKappa(double kappa1, int N1, double kappa2)
 }
 
 template <class Potential>
-void System<Potential>::setTemperature(double T1, int N1, double T2)
+void System<Potential>::setT(double T1, int N1, double T2)
 {
   for (int i = 0; i < N_; ++i) {
     if (i < N1) {
-      temperature_[i] = T1;
+      T_[i] = T1;
     } else {
-      temperature_[i] = T2;
+      T_[i] = T2;
     }
   }
+  resetD();
 }
 
 template <class Potential>
@@ -338,6 +306,15 @@ void System<Potential>::setGamma(double gamma1, int N1, double gamma2)
     } else {
       gamma_[i] = gamma2;
     }
+  }
+  resetD();
+}
+
+template <class Potential>
+void System<Potential>::resetD()
+{
+  for (int i = 0; i < N_; ++i) {
+    D_[i] = T_[i]/gamma_[i];
   }
 }
 
@@ -367,18 +344,4 @@ void System<Potential>::backInBox()
 }
 
 
-template <class Potential>
-double System<Potential>::kineticEnergy() const
-{
-  double E = 0;
-  for (int i = 0; i < N_; ++i) {
-    double e = velocities_[i].x * velocities_[i].x
-              +velocities_[i].y * velocities_[i].y;
-    E += e/2;
-
-  }
-
-  return E*m_;
-
-}
 #endif //GUARD_SYSTEM_H

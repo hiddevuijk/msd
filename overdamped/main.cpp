@@ -25,11 +25,10 @@ int main() {
   int N          = config.read<int>("N");
   double L       = config.read<double>("L");
   double dt      = config.read<double>("dt");
-  double gamma1  = config.read<double>("gamma1");
-  double gamma2  = config.read<double>("gamma2");
   double T1      = config.read<double>("T1");
   double T2      = config.read<double>("T2");
-  double m       = config.read<double>("m");
+  double gamma1  = config.read<double>("gamma1");
+  double gamma2  = config.read<double>("gamma2");
   int seed       = config.read<int>("seed");
   double rVerlet = config.read<double>("rVerlet");
   int N1         = config.read<int>("N1");
@@ -48,10 +47,10 @@ int main() {
  
   WCApotential potential(sigma, sigmaCO, epsilon, alpha);
 
-  System<WCApotential> system(N, L, dt, rVerlet, potential, gamma1,T1, m, seed);
+  System<WCApotential> system(N, L, dt, rVerlet, potential,T1,gamma1, seed);
 
   system.setKappa(kappa1, N1, kappa2);
-  system.setTemperature(T1, N1, T2);
+  system.setT(T1, N1, T2);
   system.setGamma(gamma1, N1, gamma2);
 
   system.savePositions("r0.dat");
@@ -67,11 +66,8 @@ int main() {
   int i = 0;
 
   while (time < totalTime) {
-    Temperature += system.kineticEnergy();
     if( i % 100 == 0  and i > 0){
     cout << time << endl;
-    cout << "\t" << system.kineticEnergy()/N << endl;
-    cout << "\t" << Temperature/(i*N) << endl;;
     }
     i += 1;
     
