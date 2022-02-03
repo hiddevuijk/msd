@@ -167,9 +167,9 @@ void System<Potential>::step(double dt)
   bool update = false;
   for (int i = 0; i < N_; ++i) {
 
-    dr.x = -1*forces_[i].x - kappa_[i] * forces_[i].y;
-    dr.y = -1*forces_[i].y + kappa_[i] * forces_[i].x;
-    dr *= dt/(gamma_[i]*(1+kappa_[i]*kappa_[i]));
+    dr.x = forces_[i].x - kappa_[i] * forces_[i].y;
+    dr.y = forces_[i].y + kappa_[i] * forces_[i].x;
+    dr *= dt * D_[i] / T_[i];
 
     dr.x += sqrt( 2*D_[i] * dt) * rndist();
     dr.y += sqrt( 2*D_[i] * dt) * rndist();
@@ -182,7 +182,6 @@ void System<Potential>::step(double dt)
                   > rVerlet_ - potential_.getSigmaCutOff() ) {
       update = true;
     }
-
   }
 
   if (update) { updateVerletList(); } 
@@ -315,7 +314,7 @@ template <class Potential>
 void System<Potential>::resetD()
 {
   for (int i = 0; i < N_; ++i) {
-    D_[i] = T_[i]/gamma_[i];
+    D_[i] = T_[i]/(gamma_[i]*(1+kappa_[i]*kappa_[i]));
   }
 }
 
